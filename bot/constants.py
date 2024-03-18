@@ -9,7 +9,8 @@ greetings = {
     'howdy',
     'g\'day',
     'hey',
-    'ciao'
+    'ciao',
+    "good morning"
 }
 
 greeting_emojis = [
