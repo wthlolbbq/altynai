@@ -16,3 +16,8 @@ Include a `.env` file in the directory root with your Discord token in the follo
   ```properties
   DISCORD_TOKEN=YOUR_TOKEN_STRING
   ```
+
+### Startup Script
+
+`startup.sh` may be used to automatically start the bot in a containerized or virtual environment 
+with `bash` installed. Make sure to give it execute permissions before running it.
