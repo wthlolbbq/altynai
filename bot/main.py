@@ -21,7 +21,6 @@ client: Client = Client(
     intents=intents
 )
 
-
 @client.event
 async def on_ready() -> None:
     log_on_ready()
