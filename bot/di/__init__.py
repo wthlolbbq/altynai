@@ -1,5 +1,6 @@
 from bot.cmd import *  # NOQA
 from bot.svc import *  # NOQA
+from bot.event import *  # NOQA
 from bot.di.dependency_injector import inject_dependencies
 
 inject_dependencies()

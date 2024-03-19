@@ -4,7 +4,7 @@ from bot.constants import greetings, greeting_emojis
 from bot.di.dependency_injector import inject
 from bot.di.models import Dependency, InjectionType
 from bot.models import BaseCmd, CommandContext
-from bot.svc.session_service import SessionSvc
+from bot.svc.session import SessionSvc
 
 
 @inject('greeter', [

@@ -4,7 +4,7 @@ from bot.constants import greetings
 from bot.di.dependency_injector import inject
 from bot.di.models import Dependency, InjectionType
 from bot.models import BaseCmd, CommandContext
-from bot.svc.session_service import SessionSvc
+from bot.svc.session import SessionSvc
 
 
 @inject('greeter_with_stutter', [

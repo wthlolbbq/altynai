@@ -1,5 +1,6 @@
 import operator
 import re
+from re import Pattern
 
 # Greeter, GreeterWithStutter
 
@@ -40,7 +41,7 @@ supported_operations = {
 }
 decimal_number_re = r'(?:ans|\d+(?:\.\d+)?)'
 op_re = r'(?:[x*+/:%^\-]|mod|\*\*)'
-calc_re = re.compile(
+calc_pattern: Pattern[str] = re.compile(
     r'(?P<first>' + decimal_number_re + r')' +
     r'\s*' +
     r'(?P<op>' + op_re + r')' +
@@ -51,14 +52,14 @@ calc_re = re.compile(
 
 # Reactor
 
-loveyou_re = re.compile(
+loveyou_pattern: Pattern[str] = re.compile(
     r'love\s+you',
     re.IGNORECASE
 )
 
 # ChannelMessageSender
 
-send_msg_to_channel_re = re.compile(
+send_msg_to_channel_pattern: Pattern[str] = re.compile(
     r'^'
     r'to:\s*'
     r'(?P<channel_name>.*)'
