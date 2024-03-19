@@ -23,3 +23,7 @@ class BaseCmd:
 
 class BaseSvc:
     pass
+
+
+class BaseEvent:
+    pass

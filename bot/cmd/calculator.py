@@ -1,10 +1,13 @@
-from discord import Message  # NOQA
+from typing import Any
 
-from bot.constants import calc_re, supported_operations
+from discord import Message, User  # NOQA
+
+from bot.constants import calc_pattern, supported_operations
 from bot.di.dependency_injector import inject
 from bot.di.models import Dependency, InjectionType
 from bot.models import CommandContext, BaseCmd
-from bot.svc.session_service import SessionSvc
+from bot.svc.session import SessionSvc
+from bot.utils import matches
 
 
 @inject('calculator', [
@@ -17,46 +20,61 @@ class Calculator(BaseCmd):
 
     def is_applicable(self, ctx: CommandContext) -> bool:
         msg_lower = ctx.msg.content.lower()
-        return calc_re.search(msg_lower) is not None
+        return matches(msg_lower, calc_pattern)
 
     async def execute(self, ctx: CommandContext):
-        calc_operands = Calculator.extract_calc_params(ctx.msg)
-        last_user_ans = self.session_svc.last_calc_ans
-        user_id = ctx.msg.author.id
-
-        result = self.calculate(ctx, **calc_operands)
-        if result is None:
-            await ctx.msg.channel.send('bruh')
-        else:
-            last_user_ans[user_id] = result
-            await ctx.msg.channel.send(str(result))
-
-    def calculate(self, ctx: CommandContext, first: str, second: str, op: str) -> float | int | None:
         try:
-            num1 = self.to_num(ctx, first)
-            num2 = self.to_num(ctx, second)
-            operation = supported_operations[op]
-
-            return Calculator.round(operation(num1, num2))
+            result = self.calculate(ctx)
+            self.store_success_calc_result(ctx, result)
+            await ctx.msg.channel.send(str(result))
         except (ArithmeticError, ValueError):
-            return None
+            await ctx.msg.channel.send('bruh')
 
-    def to_num(self, ctx: CommandContext, user_input: str):
+    def calculate(self, ctx: CommandContext):
+        num1, num2, op = self.get_calc_params(ctx)
+        result = op(num1, num2)
+        return self.round_if_needed(result)
+
+    def store_success_calc_result(self, ctx: CommandContext, result: float | int):
+        user_ans_storage = self.session_svc.last_calc_ans
         user_id = ctx.msg.author.id
-        last_user_ans = self.session_svc.last_calc_ans
+        user_ans_storage[user_id] = result
 
-        if user_input.lower() != 'ans':
-            return float(user_input)
-        elif (last_ans := last_user_ans.get(user_id, None)) is not None:
-            return last_ans
-        else:
+    def get_calc_params(self, ctx: CommandContext) -> (float, float, Any):
+        first, second, op = self.extract_raw_params(ctx.msg)
+
+        num1 = self.to_num(ctx, first)
+        num2 = self.to_num(ctx, second)
+        operation = supported_operations[op]
+
+        return num1, num2, operation
+
+    def to_num(self, ctx: CommandContext, user_input: str) -> float:
+        if self.should_fetch_last_ans(user_input):
+            return self.get_last_ans(ctx.msg.author.id)
+
+        return float(user_input)
+
+    def should_fetch_last_ans(self, user_input):
+        return user_input.lower() == 'ans'
+
+    def get_last_ans(self, user_id: int):
+        try:
+            return self.session_svc.last_calc_ans[user_id]
+        except KeyError:
             raise ValueError()
 
-    @staticmethod
-    def extract_calc_params(msg: Message):
-        return calc_re.search(msg.content).groupdict()
+    def extract_raw_params(self, msg: Message):
+        re_match = calc_pattern.search(msg.content)
+        return re_match['first'], re_match['second'], re_match['op']
 
     @staticmethod
-    def round(result):
-        is_int = result % 1 == 0
-        return int(result) if is_int else result
+    def round_if_needed(result):
+        if Calculator.is_integer(result):
+            return int(result)
+        else:
+            return result
+
+    @staticmethod
+    def is_integer(result):
+        return result % 1 == 0

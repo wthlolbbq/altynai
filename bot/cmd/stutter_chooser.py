@@ -2,7 +2,7 @@ from bot.constants import stutter_choices
 from bot.di.dependency_injector import inject
 from bot.di.models import Dependency, InjectionType
 from bot.models import BaseCmd, CommandContext
-from bot.svc.session_service import SessionSvc
+from bot.svc.session import SessionSvc
 
 
 @inject('stutter_chooser', [
@@ -17,5 +17,12 @@ class StutterChooser(BaseCmd):
         return msg_lower in stutter_choices
 
     async def execute(self, ctx: CommandContext):
+        self.set_stutter_choice(ctx)
+
+    def set_stutter_choice(self, ctx: CommandContext):
+        new_stutter_choice = self.get_stutter_choice(ctx)
+        self.session_svc.is_stuttering = new_stutter_choice
+
+    def get_stutter_choice(self, ctx):
         msg_lower = ctx.msg.content.lower()
-        self.session_svc.is_stuttering = stutter_choices[msg_lower]
+        return stutter_choices[msg_lower]
