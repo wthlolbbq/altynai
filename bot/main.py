@@ -13,7 +13,6 @@ from bot.event.on_ready import OnReadyHandler
 load_dotenv()  # Assumes .env is present in the root directory.
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-# bot setup
 intents: Intents = Intents.default()
 intents.message_content = True  # NOQA
 client: Client = Client(

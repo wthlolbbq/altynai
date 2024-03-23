@@ -2,6 +2,8 @@ import operator
 import re
 from re import Pattern
 
+from bot.models import CalculationOperation
+
 # Greeter, GreeterWithStutter
 
 greetings = {
@@ -11,7 +13,7 @@ greetings = {
     'g\'day',
     'hey',
     'ciao',
-    "good morning"
+    'good morning'
 }
 
 greeting_emojis = [
@@ -27,20 +29,22 @@ stutter_choices = {
 
 # Calculator
 
-supported_operations = {
-    'x': operator.mul,
-    '*': operator.mul,
-    '+': operator.add,
-    '/': operator.truediv,
-    ':': operator.truediv,
-    '-': operator.sub,
-    '%': operator.mod,
-    'mod': operator.mod,
-    '**': operator.pow,
-    '^': operator.pow,
+last_calc_answer_pattern = r'ans'
+supported_operations: dict[str, CalculationOperation] = {
+    'x': CalculationOperation(r'x', operator.mul),
+    '*': CalculationOperation(r'\*', operator.mul),
+    '+': CalculationOperation(r'\+', operator.add),
+    '/': CalculationOperation(r'/', operator.truediv),
+    ':': CalculationOperation(r'\:', operator.truediv),
+    '-': CalculationOperation(r'\-', operator.sub),
+    '%': CalculationOperation(r'%', operator.mod),
+    'mod': CalculationOperation(r'mod', operator.mod),
+    '**': CalculationOperation(r'\*\*', operator.pow),
+    '^': CalculationOperation(r'\^', operator.pow),
 }
-decimal_number_re = r'(?:ans|\d+(?:\.\d+)?)'
-op_re = r'(?:[x*+/:%^\-]|mod|\*\*)'
+op_re = r'(?:' + r'|'.join([i.re_pattern for i in supported_operations.values()]) + r')'
+decimal_number_re = r'(?:' + last_calc_answer_pattern + r'|\d+(?:\.\d+)?)'
+
 calc_pattern: Pattern[str] = re.compile(
     r'(?P<first>' + decimal_number_re + r')' +
     r'\s*' +
