@@ -4,7 +4,7 @@ A simple Discord Bot written using Python.
 
 ### Requirements
 
-- `python 3.10` or above
+- `python 3.12` or above
 
 Install the latest version of the following packages (if you're using `pip`, run `pip install -r requirements.txt`):
 
