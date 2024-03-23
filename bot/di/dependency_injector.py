@@ -117,9 +117,7 @@ def inject_dependencies():
     while True:
         pre_prune_size = len(_pending_di_registry)
         for injection in _pending_di_registry[:]:
-            print(injection.name, 'aaa', [d.name for d in injection.dependencies])
             if injection.are_all_deps_resolved(_di_registry, _pending_di_registry):
-                print('injecting')
                 _di_registry[injection] = injection.construct_instance(_di_registry)
                 _pending_di_registry.remove(injection)
 
