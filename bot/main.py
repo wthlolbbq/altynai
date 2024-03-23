@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 
 import discord  # NOQA
 from discord import Intents, Client, Message  # NOQA
@@ -41,7 +41,7 @@ def log_on_ready():
 
 
 def log_on_message(msg):
-    timestamp = datetime.utcnow().strftime(log_datetime_format)
+    timestamp = datetime.now(UTC).strftime(log_datetime_format)
     print(f'[{timestamp}] in {msg.channel} from {msg.author}: \"{msg.content}\"')
 
 

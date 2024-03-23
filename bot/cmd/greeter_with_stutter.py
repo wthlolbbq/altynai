@@ -9,13 +9,11 @@ from bot.svc.session import SessionSvc
 
 @inject('greeter_with_stutter', [
     Dependency.get('session_svc', SessionSvc, InjectionType.SINGLE_BY_TYPE),
-    # Dependency.get('abc_def', BaseCmd, InjectionType.ALL_BY_TYPE)
 ])
 class GreeterWithStutter(BaseCmd):
 
     def __init__(self, session_svc: SessionSvc):
         self.session_svc = session_svc
-        # print(abc_def)
 
     def is_applicable(self, ctx: CommandContext) -> bool:
         msg_lower = ctx.msg.content.lower()

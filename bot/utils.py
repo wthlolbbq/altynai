@@ -20,3 +20,7 @@ def matches(s: str, pattern: Pattern[str]):
 
 def first(filter_function, iterable: Iterable):
     return next(filter(filter_function, iterable), None)
+
+
+def is_number_integer(num: float | int):
+    return num % 1 == 0

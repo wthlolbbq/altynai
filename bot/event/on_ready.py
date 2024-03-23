@@ -1,6 +1,6 @@
 import random
 
-from discord import Client
+from discord import Client  # NOQA
 
 from bot.constants import entrance_lines
 from bot.di.dependency_injector import inject
