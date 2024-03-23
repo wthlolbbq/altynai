@@ -1,7 +1,7 @@
 from bot.cmd import *  # NOQA
-from bot.svc import *  # NOQA
-from bot.event import *  # NOQA
 from bot.di.dependency_injector import inject_dependencies
+from bot.event import *  # NOQA
+from bot.svc import *  # NOQA
 
 inject_dependencies()
 
@@ -9,8 +9,8 @@ inject_dependencies()
 In order to use Dependency Injection (DI) follow these steps (skip to 
 step 4 if a package that supports DI already exists).
 
-1. Create a package which will only contain injectee classes.
-2. Create an __init__.py file in the created package, with the following:
+1. Create a package which is going to contain only injection classes.
+2. Create an __init__.py file in the created package, containing the following:
 
 from bot.di.utils import get_sibling_user_modules
 __all__ = get_sibling_user_modules(__file__)
@@ -20,14 +20,13 @@ __all__ = get_sibling_user_modules(__file__)
 
 from bot.my.package import *  # NOQA
 
-4. Add the `inject` decorator to your injectee classes, and optionally add 
+4. Add the `inject` decorator to your injection classes, and optionally add 
 dependencies, e.g.
 
-@inject('my_injectee', [
-    Dependency('some_svc', SomeSvc, InjectionType.BY_NAME)
+@inject('my_injection', [
+    Dependency.get('some_svc', SomeSvc, InjectionType.BY_NAME)
 ])
-class MyInjectee:
+class MyInjection:
     ...
 
 """
-

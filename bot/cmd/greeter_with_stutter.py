@@ -1,19 +1,21 @@
 import random
 
 from bot.constants import greetings
-from bot.di.dependency_injector import inject
-from bot.di.models import Dependency, InjectionType
+from bot.di.dependency_injector import inject, Dependency
+from bot.di.models import InjectionType
 from bot.models import BaseCmd, CommandContext
 from bot.svc.session import SessionSvc
 
 
 @inject('greeter_with_stutter', [
-    Dependency('session_svc', SessionSvc, InjectionType.BY_NAME)
+    Dependency.get('session_svc', SessionSvc, InjectionType.SINGLE_BY_TYPE),
+    # Dependency.get('abc_def', BaseCmd, InjectionType.ALL_BY_TYPE)
 ])
 class GreeterWithStutter(BaseCmd):
 
     def __init__(self, session_svc: SessionSvc):
         self.session_svc = session_svc
+        # print(abc_def)
 
     def is_applicable(self, ctx: CommandContext) -> bool:
         msg_lower = ctx.msg.content.lower()

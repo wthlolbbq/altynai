@@ -2,16 +2,16 @@ from typing import Any
 
 from discord import Message, User  # NOQA
 
-from bot.constants import calc_pattern, supported_operations
-from bot.di.dependency_injector import inject
-from bot.di.models import Dependency, InjectionType
+from bot.constants import calc_pattern, supported_operations, last_calc_answer_pattern
+from bot.di.dependency_injector import inject, Dependency
+from bot.di.models import InjectionType
 from bot.models import CommandContext, BaseCmd
 from bot.svc.session import SessionSvc
 from bot.utils import matches
 
 
 @inject('calculator', [
-    Dependency('session_svc', SessionSvc, InjectionType.BY_NAME)
+    Dependency.get('session_svc', SessionSvc, InjectionType.SINGLE_BY_TYPE)
 ])
 class Calculator(BaseCmd):
 
@@ -45,7 +45,7 @@ class Calculator(BaseCmd):
 
         num1 = self.to_num(ctx, first)
         num2 = self.to_num(ctx, second)
-        operation = supported_operations[op]
+        operation = supported_operations[op].op
 
         return num1, num2, operation
 
@@ -56,7 +56,7 @@ class Calculator(BaseCmd):
         return float(user_input)
 
     def should_fetch_last_ans(self, user_input):
-        return user_input.lower() == 'ans'
+        return user_input.lower() == last_calc_answer_pattern
 
     def get_last_ans(self, user_id: int):
         try:
@@ -64,17 +64,17 @@ class Calculator(BaseCmd):
         except KeyError:
             raise ValueError()
 
-    def extract_raw_params(self, msg: Message):
+    def extract_raw_params(self, msg: Message) -> (str, str, str):
         re_match = calc_pattern.search(msg.content)
         return re_match['first'], re_match['second'], re_match['op']
 
     @staticmethod
     def round_if_needed(result):
-        if Calculator.is_integer(result):
+        if Calculator.is_number_integer(result):
             return int(result)
         else:
             return result
 
     @staticmethod
-    def is_integer(result):
-        return result % 1 == 0
+    def is_number_integer(num):
+        return num % 1 == 0

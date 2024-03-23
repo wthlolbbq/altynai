@@ -1,4 +1,5 @@
 from re import Pattern
+from typing import Iterable
 
 import discord  # NOQA
 from discord import Client  # NOQA
@@ -15,3 +16,7 @@ def empty_if_none(arg: list | None) -> list:
 
 def matches(s: str, pattern: Pattern[str]):
     return pattern.search(s) is not None
+
+
+def first(filter_function, iterable: Iterable):
+    return next(filter(filter_function, iterable), None)

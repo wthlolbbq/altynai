@@ -27,3 +27,9 @@ class BaseSvc:
 
 class BaseEvent:
     pass
+
+
+class CalculationOperation:
+    def __init__(self, re_pattern: str, op):
+        self.re_pattern = re_pattern
+        self.op = op

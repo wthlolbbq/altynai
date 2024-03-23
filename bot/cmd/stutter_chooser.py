@@ -1,12 +1,12 @@
 from bot.constants import stutter_choices
-from bot.di.dependency_injector import inject
-from bot.di.models import Dependency, InjectionType
+from bot.di.dependency_injector import inject, Dependency
+from bot.di.models import InjectionType
 from bot.models import BaseCmd, CommandContext
 from bot.svc.session import SessionSvc
 
 
 @inject('stutter_chooser', [
-    Dependency('session_svc', SessionSvc, InjectionType.BY_NAME)
+    Dependency.get('session_svc', SessionSvc, InjectionType.SINGLE_BY_TYPE)
 ])
 class StutterChooser(BaseCmd):
     def __init__(self, session_svc: SessionSvc):
