@@ -73,6 +73,17 @@ send_msg_to_channel_pattern: Pattern[str] = re.compile(
     re.IGNORECASE
 )
 
+# YouTubeSearch
+
+youtube_pattern: Pattern[str] = re.compile(
+    r'^'
+    r'yt\s*'
+    r'(?P<search_term>\w.*)',
+    re.IGNORECASE
+)
+
+rickroll_url = r'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+
 # Other
 
 channel_ids = {
