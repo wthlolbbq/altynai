@@ -4,7 +4,6 @@ if ! [ -d altynai ]; then
 fi
 
 cd altynai
-git fetch
 git pull
 pip install -r requirements.txt
 export PYTHONPATH="${PYTHONPATH}:/home/container/altynai/"
