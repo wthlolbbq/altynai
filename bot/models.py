@@ -51,23 +51,23 @@ class PreProcessingHook:
         raise NotImplementedError()
 
 
-class PostProcessingHook[T]:
-    def run(self, ctx: CommandContext, result: T):
+class PostProcessingHook:
+    def run(self, ctx: CommandContext, result):
         raise NotImplementedError()
 
 
-class ProcessingExecutor[T]:
+class ProcessingExecutor:
     def get_result(self, ctx: CommandContext):
         raise NotImplementedError()
 
 
-class CmdProcess[T]:
+class CmdProcess:
 
     def __init__(
             self,
-            executor: ProcessingExecutor[T],
+            executor: ProcessingExecutor,
             pre_processing_hooks: list[PreProcessingHook] = None,
-            post_processing_hooks: list[PostProcessingHook[T]] = None,
+            post_processing_hooks: list[PostProcessingHook] = None,
     ):
         self.executor = executor
         self.post_processing_hooks = empty_if_none(post_processing_hooks)
@@ -77,7 +77,7 @@ class CmdProcess[T]:
         for hook in self.pre_processing_hooks:
             hook.run(ctx)
 
-        result: T = self.executor.get_result(ctx)
+        result = self.executor.get_result(ctx)
 
         for hook in self.post_processing_hooks:
             hook.run(ctx, result)
@@ -91,11 +91,11 @@ class CalculatorProcessResult:
         self.raw_result = raw_result
 
 
-class CalculatorProcessExecutor(ProcessingExecutor[CalculatorProcessResult]):
+class CalculatorProcessExecutor(ProcessingExecutor):
     pass
 
 
-class CalculatorPostProcessingHook(PostProcessingHook[CalculatorProcessResult]):
+class CalculatorPostProcessingHook(PostProcessingHook):
     pass
 
 

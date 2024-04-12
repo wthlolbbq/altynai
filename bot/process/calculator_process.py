@@ -8,5 +8,5 @@ from bot.process.calculator_process_hooks import CalculatorPostProcessingHook
     Dependency.get('executor', CalculatorProcessExecutor, InjectionType.SINGLE_BY_TYPE),
     Dependency.get('post_processing_hooks', CalculatorPostProcessingHook, InjectionType.ALL_BY_TYPE),
 ])
-class CalculatorProcess(CmdProcess[CalculatorProcessResult]):
+class CalculatorProcess(CmdProcess):
     pass
