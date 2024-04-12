@@ -88,14 +88,24 @@ rickroll_url = r'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
 
 flag_quiz_replace_pattern = re.compile(r'[^a-z]')
 default_time_between_questions: float = 3  # seconds
-start_quiz = 'start quiz'
-end_quiz = 'stop quiz'
+start_quiz_pattern: Pattern[str] = re.compile(
+    r'^(start|begin)\s*quiz!*$',
+    re.IGNORECASE
+)
+end_quiz_pattern: Pattern[str] = re.compile(
+    r'^(stop|end)\s*quiz!*$',
+    re.IGNORECASE
+)
+skip_quiz_pattern: Pattern[str] = re.compile(
+    r'^(skip|reveal)\s*question!*$',
+    re.IGNORECASE
+)
 
 country_code2country_name = {
     'AC': ['Ascension Island', 'ascension'],
     'AD': ['Andorra'],
     'AE': ['United Arab Emirates', 'uae', 'emirates'],
-    'AF': ['Afghanistan'],
+    'AF': ['Islamic Emirate of Afghanistan', 'Afghanistan'],
     'AG': ['Antigua and Barbuda'],
     'AI': ['Anguilla'],
     'AL': ['Albania'],
@@ -157,7 +167,6 @@ country_code2country_name = {
     'DM': ['Dominica'],
     'DO': ['Dominican Republic', 'dominican'],
     'DZ': ['Algeria'],
-    'EA': ['Ceuta, Melilla', 'ceuta', 'melilla'],
     'EC': ['Ecuador'],
     'EE': ['Estonia'],
     'EG': ['Egypt'],
@@ -241,7 +250,6 @@ country_code2country_name = {
     'MC': ['Monaco'],
     'MD': ['Moldova'],
     'ME': ['Montenegro'],
-    'MF': ['Saint Martin (French part)'],
     'MG': ['Madagascar'],
     'MH': ['Marshall Islands', 'marshall'],
     'MK': ['North Macedonia', 'macedonia'],
@@ -249,7 +257,7 @@ country_code2country_name = {
     'MM': ['Myanmar'],
     'MN': ['Mongolia'],
     'MO': ['Macao'],
-    'MP': ['Northern Mariana Islands', 'northern mariana'],
+    'MP': ['Northern Mariana Islands', 'northern mariana', 'northern marianas'],
     'MQ': ['Martinique'],
     'MR': ['Mauritania'],
     'MS': ['Montserrat'],
@@ -267,7 +275,7 @@ country_code2country_name = {
     'NG': ['Nigeria'],
     'NI': ['Nicaragua'],
     'NL': ['Netherlands', 'the netherlands', 'nl'],
-    'NO': ['Norway'],
+    'NO': ['Norway', 'Svalbard and Jan Mayen', 'svalbard', 'norge'],
     'NP': ['Nepal'],
     'NR': ['Nauru'],
     'NU': ['Niue'],
@@ -276,8 +284,8 @@ country_code2country_name = {
     'PA': ['Panama'],
     'PE': ['Peru'],
     'PF': ['French Polynesia'],
-    'PG': ['Papua New Guinea'],
-    'PH': ['Philippines'],
+    'PG': ['Papua New Guinea', 'papa johns'],
+    'PH': ['The Philippines', 'Philippines'],
     'PK': ['Pakistan'],
     'PL': ['Poland'],
     'PM': ['Saint Pierre and Miquelon', 'saint pierre', 'st pierre'],
@@ -290,10 +298,10 @@ country_code2country_name = {
     'QA': ['Qatar'],
     'RE': ['Reunion'],
     'RO': ['Romania'],
-    'RS': ['Serbia'],
+    'RS': ['Serbia', 'enemies'],
     'RU': ['Russian Federation', 'russia', 'ru', 'cccp'],
     'RW': ['Rwanda'],
-    'SA': ['Saudi Arabia'],
+    'SA': ['Saudi Arabia', 'saudi'],
     'SB': ['Solomon Islands', 'solomon', 'solomons'],
     'SC': ['Seychelles'],
     'SD': ['Sudan'],
@@ -301,7 +309,6 @@ country_code2country_name = {
     'SG': ['Singapore'],
     'SH': ['Saint Helena, Ascension and Tristan da Cunha', 'st helena', 'saint helena'],
     'SI': ['Slovenia'],
-    'SJ': ['Svalbard and Jan Mayen', 'svalbard'],
     'SK': ['Slovakia'],
     'SL': ['Sierra Leone'],
     'SM': ['San Marino'],
@@ -311,13 +318,14 @@ country_code2country_name = {
     'SS': ['South Sudan'],
     'ST': ['Sao Tome and Principe', 'sao tome'],
     'SV': ['El Salvador'],
-    'SX': ['Sint Maarten (Dutch part)'],
+    'SX': ['Sint Maarten (Dutch part)', 'sint maarten', 'st martin', 'saint martin'],
     'SY': ['Syrian Arab Republic', 'syria'],
     'SZ': ['Swaziland', 'eswatini'],
     'TA': ['Tristan da Cunha'],
     'TC': ['Turks and Caicos Islands', 'turks and caicos'],
     'TD': ['Chad'],
-    'TF': ['French Southern Territories', 'fst'],
+    'TF': ['French Southern and Antarctic Lands', 'French Southern Territories', 'French Southern Lands', 'fst', 'fsal',
+           'taaf'],
     'TG': ['Togo'],
     'TH': ['Thailand'],
     'TJ': ['Tajikistan'],
