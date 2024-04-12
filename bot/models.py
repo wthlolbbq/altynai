@@ -1,5 +1,6 @@
 from discord import Client, Message  # NOQA
 
+from bot.helper.ordered import DEFAULT_PRIORITY, Ordered, HIGHEST_PRIORITY
 from bot.utils import empty_if_none
 
 
@@ -15,12 +16,20 @@ class CommandContext:
         self.client = client
 
 
-class BaseCmd:
+class BaseCmd(Ordered):
     def is_applicable(self, ctx: CommandContext) -> bool:
         raise NotImplementedError()
 
     async def execute(self, ctx: CommandContext):
         raise NotImplementedError()
+
+    def get_priority(self):
+        return DEFAULT_PRIORITY
+
+
+class FlagCmd(BaseCmd):
+    def get_priority(self):
+        return HIGHEST_PRIORITY
 
 
 class BaseSvc:

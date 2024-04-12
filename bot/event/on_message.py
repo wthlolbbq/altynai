@@ -25,6 +25,7 @@ class OnMessageHandler(BaseEvent):
             print(e)
 
     def get_applicable_cmd_strategy(self, ctx: CommandContext) -> BaseCmd:
-        cmd_strategies = get_injected_by_class(BaseCmd)
-        applicable_cmd_strategies = (i for i in cmd_strategies if i.is_applicable(ctx))
+        cmd_strategies: list[BaseCmd] = get_injected_by_class(BaseCmd)
+        prioritized_strategies = sorted(cmd_strategies, key=lambda cmd: cmd.get_priority())
+        applicable_cmd_strategies = (i for i in prioritized_strategies if i.is_applicable(ctx))
         return next(applicable_cmd_strategies)
