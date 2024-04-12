@@ -22,11 +22,16 @@ class FlagQuizNoActiveQuizzesException(Exception):
     pass
 
 
+class FlagQuizNoActiveQuestionsException(Exception):
+    pass
+
+
 class FlagQuizStatus(Enum):
     STARTED = 0,
     ANSWERED = 1,
     WAITING_FOR_ANSWER = 2,
     PAUSED = 3,
+    SKIPPED = 4
 
 
 class FlagQuizQuestion:
@@ -61,6 +66,20 @@ class FlagQuizData:
 
     def belongs_to(self, guild_id: int, channel_id: int):
         return self.guild_id == guild_id and self.channel_id == channel_id
+
+    def try_answer(self, attempt: str, author: User | Member):
+        if self.can_answer() and self.question.is_answer(attempt):
+            self.increment_score(author)
+            self.status = FlagQuizStatus.ANSWERED
+            return True
+
+        return False
+
+    def skip(self):
+        if self.status == FlagQuizStatus.SKIPPED:
+            raise FlagQuizNoActiveQuestionsException()
+
+        self.status = FlagQuizStatus.SKIPPED
 
     def increment_score(self, user: User | Member):
         score = self.user_scores.get(user)
@@ -117,16 +136,19 @@ class FlagQuizSvc(BaseSvc):
         self.get_quiz_by_ctx(ctx).status = FlagQuizStatus.WAITING_FOR_ANSWER
 
     def try_answer(self, ctx: CommandContext):
-        author = ctx.msg.author
         attempt = ctx.msg.content
+        author = ctx.msg.author
         quiz = self.get_quiz_by_ctx(ctx)
 
-        if quiz.can_answer() and quiz.question.is_answer(attempt):
-            quiz.increment_score(author)
-            quiz.status = FlagQuizStatus.ANSWERED
-            return True
+        return quiz.try_answer(attempt, author)
 
-        return False
+    def reveal_answer(self, ctx: CommandContext):
+        quiz = self.get_quiz_by_ctx(ctx)
+        if quiz is None:
+            raise FlagQuizNoActiveQuizzesException()
+
+        quiz.skip()
+        return quiz.question.full_answer
 
     def get_new_random_question(self) -> FlagQuizQuestion:
         new_country_code: str = random.choice(country_codes)
