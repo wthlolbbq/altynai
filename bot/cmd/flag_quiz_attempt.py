@@ -23,7 +23,7 @@ class FlagQuizAttempt(FlagCmd):
             full_answer = self.flag_quiz_svc.get_quiz_by_ctx(ctx).question.full_answer
             await ctx.msg.channel.send(f'{ctx.msg.author.mention} Correct, that\'s **{full_answer}**!')
             await ctx.msg.channel.send(
-                f'Question {self.flag_quiz_svc.get_question_num(ctx)} in '
+                f'Question {self.flag_quiz_svc.get_question_num(ctx) + 1} in '
                 f'{self.flag_quiz_svc.time_between_questions} seconds...'
             )
             await self.flag_quiz_svc.pause_quiz(ctx)

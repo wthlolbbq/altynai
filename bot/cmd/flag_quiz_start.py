@@ -20,10 +20,7 @@ class FlagQuizStart(FlagCmd):
     async def execute(self, ctx: CommandContext):
         try:
             self.flag_quiz_svc.start_new_quiz(ctx)
-            await ctx.msg.channel.send(
-                f'Question {self.flag_quiz_svc.get_question_num(ctx)} in '
-                f'{self.flag_quiz_svc.time_between_questions} seconds...'
-            )
+            await ctx.msg.channel.send(f'Question 1 in {self.flag_quiz_svc.time_between_questions} seconds...')
             await self.flag_quiz_svc.pause_quiz(ctx)
             question_text, flag_image = self.flag_quiz_svc.get_next_question(ctx)
             await ctx.msg.channel.send(content=question_text, file=flag_image)
