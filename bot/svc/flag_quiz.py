@@ -36,10 +36,12 @@ class FlagQuizStatus(Enum):
 
 class FlagQuizQuestion:
     def __init__(self,
+                 number: int,
                  country_code: str,
                  answer: list[str],
                  flag_image: File,
                  question_text: str = 'What country does this flag represent?'):
+        self.number = number
         self.country_code = country_code
         self.answer = answer
         self.full_answer = answer[0]
@@ -121,7 +123,7 @@ class FlagQuizSvc(BaseSvc):
         self.quizzes.remove(currently_active_quiz)
 
     def get_next_question(self, ctx: CommandContext):
-        question = self.get_new_random_question()
+        question = self.get_new_random_question(ctx)
         self.update_quiz_data_with_new_question(ctx, question)
 
         return question.question_text, question.flag_image
@@ -150,15 +152,21 @@ class FlagQuizSvc(BaseSvc):
         quiz.skip()
         return quiz.question.full_answer
 
-    def get_new_random_question(self) -> FlagQuizQuestion:
+    def get_new_random_question(self, ctx: CommandContext) -> FlagQuizQuestion:
+        current_question_number = self.get_current_question_number(ctx)
         new_country_code: str = random.choice(country_codes)
         new_country_name = country_code2country_name[new_country_code]
 
         return FlagQuizQuestion(
+            current_question_number + 1,
             new_country_code,
             new_country_name,
             self.get_flag_image(new_country_code),
         )
+
+    def get_current_question_number(self, ctx):
+        quiz = self.get_quiz_by_ctx(ctx)
+        return 0 if quiz is None else quiz.question.number
 
     def validate_can_start_quiz(self, ctx: CommandContext):
         if self.quiz_in_progress(ctx):
@@ -171,3 +179,6 @@ class FlagQuizSvc(BaseSvc):
         guild_id = ctx.msg.guild.id
         channel_id = ctx.msg.channel.id
         return guild_id, channel_id
+
+    def get_question_num(self, ctx):
+        return self.get_quiz_by_ctx(ctx).question.number

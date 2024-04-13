@@ -22,7 +22,10 @@ class FlagQuizAttempt(FlagCmd):
         if self.flag_quiz_svc.try_answer(ctx):
             full_answer = self.flag_quiz_svc.get_quiz_by_ctx(ctx).question.full_answer
             await ctx.msg.channel.send(f'{ctx.msg.author.mention} Correct, that\'s **{full_answer}**!')
-            await ctx.msg.channel.send(f'Next question in {self.flag_quiz_svc.time_between_questions} seconds...')
+            await ctx.msg.channel.send(
+                f'Question {self.flag_quiz_svc.get_question_num(ctx)} in '
+                f'{self.flag_quiz_svc.time_between_questions} seconds...'
+            )
             await self.flag_quiz_svc.pause_quiz(ctx)
             question_text, flag_image = self.flag_quiz_svc.get_next_question(ctx)
             await ctx.msg.channel.send(content=question_text, file=flag_image)
