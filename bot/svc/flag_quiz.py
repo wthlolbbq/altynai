@@ -166,7 +166,7 @@ class FlagQuizSvc(BaseSvc):
 
     def get_current_question_number(self, ctx):
         quiz = self.get_quiz_by_ctx(ctx)
-        return 0 if quiz is None else quiz.question.number
+        return 0 if quiz is None else quiz.number
 
     def validate_can_start_quiz(self, ctx: CommandContext):
         if self.quiz_in_progress(ctx):
@@ -181,4 +181,4 @@ class FlagQuizSvc(BaseSvc):
         return guild_id, channel_id
 
     def get_question_num(self, ctx):
-        return self.get_quiz_by_ctx(ctx).question.number
+        return self.get_quiz_by_ctx(ctx).number
