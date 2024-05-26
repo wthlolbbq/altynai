@@ -1,4 +1,4 @@
-from bot.constants import send_msg_to_channel_pattern
+from bot.const.constants import send_msg_to_channel_pattern
 from bot.di.dependency_injector import inject
 from bot.models import CommandContext, BaseCmd
 from bot.utils import get_channel_by_name, matches

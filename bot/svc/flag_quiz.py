@@ -2,16 +2,17 @@ import asyncio
 import random
 import re
 from enum import Enum
+from typing import Type
 
-import discord
-from discord import Member, User, File
+from discord import Member, User, File  # NOQA
 
-from bot import ROOT_PATH
-from bot.constants import country_code2country_name, country_codes, default_time_between_questions, \
-    flag_quiz_replace_pattern
+from bot.const.constants import country_code2country_name, country_codes, default_time_between_questions, \
+    start_quiz_pattern, country_code2capital, country_code2population, non_alpha_pattern
 from bot.di.dependency_injector import inject
 from bot.models import BaseSvc, CommandContext
-from bot.utils import first
+from bot.utils import first, get_flag_image
+
+max_rel_deviation_from_correct_answer = 25  # Percentage.
 
 
 class FlagQuizInProgressException(Exception):
@@ -38,23 +39,67 @@ class FlagQuizQuestion:
     def __init__(self,
                  number: int,
                  country_code: str,
-                 answer: list[str],
+                 answer: any,
                  flag_image: File,
-                 question_text: str = 'What country does this flag represent?'):
+                 question_text: str):
         self.number = number
         self.country_code = country_code
         self.answer = answer
-        self.full_answer = answer[0]
-        self.normalized_answers = [self.normalize_flag_quiz_answer(ans) for ans in answer]
-        self.flag_image = flag_image
         self.question_text = question_text
+        self.flag_image = flag_image
+
+    def get_full_answer(self):
+        raise NotImplementedError()
 
     def is_answer(self, attempt: str):
-        return self.normalize_flag_quiz_answer(attempt) in self.normalized_answers
+        raise NotImplementedError()
 
-    @staticmethod
-    def normalize_flag_quiz_answer(answer: str):
-        return re.sub(flag_quiz_replace_pattern, '', answer.lower())
+
+class FlagCountryQuizQuestion(FlagQuizQuestion):
+    def __init__(self, number: int, country_code: str, answer: any, flag_image: File, question_text: str):
+        super().__init__(number, country_code, answer, flag_image, question_text)
+
+        self.normalized_answers = [self.normalize_answer(ans) for ans in answer]
+
+    def get_full_answer(self):
+        return self.answer[0]
+
+    def is_answer(self, attempt: str):
+        return self.normalize_answer(attempt) in self.normalized_answers
+
+    def normalize_answer(self, answer: str):
+        return re.sub(non_alpha_pattern, '', answer.lower())
+
+
+class FlagCapitalQuizQuestion(FlagCountryQuizQuestion):
+    pass
+
+
+class FlagPopulationQuizQuestion(FlagQuizQuestion):
+
+    def get_full_answer(self):
+        return f'{self.answer:,}'
+
+    def is_answer(self, attempt: str):
+        normalized_answer = self.normalize_answer(attempt)
+        if normalized_answer is None:
+            return False
+
+        max_abs_deviation_from_correct_answer = max_rel_deviation_from_correct_answer / 100 * self.answer
+        potential_answers = (
+            normalized_answer,
+            normalized_answer * 1_000,  # thousands
+            normalized_answer * 1_000_000,  # millions
+            normalized_answer * 1_000_000_000,  # billions
+        )
+
+        return any(abs(ans - self.answer) < max_abs_deviation_from_correct_answer for ans in potential_answers)
+
+    def normalize_answer(self, answer: str) -> float | None:
+        try:
+            return float(answer)
+        except ValueError:
+            return None
 
 
 class FlagQuizData:
@@ -65,6 +110,9 @@ class FlagQuizData:
 
         self.question: FlagQuizQuestion | None = None
         self.user_scores = dict()
+
+    def get_current_question_number(self):
+        return 0 if self.question is None else self.question.number
 
     def belongs_to(self, guild_id: int, channel_id: int):
         return self.guild_id == guild_id and self.channel_id == channel_id
@@ -77,8 +125,8 @@ class FlagQuizData:
 
         return False
 
-    def skip(self):
-        if self.status == FlagQuizStatus.SKIPPED:
+    def skip_question(self):
+        if self.status in (FlagQuizStatus.SKIPPED, FlagQuizStatus.PAUSED, FlagQuizStatus.STARTED):
             raise FlagQuizNoActiveQuestionsException()
 
         self.status = FlagQuizStatus.SKIPPED
@@ -89,6 +137,65 @@ class FlagQuizData:
 
     def can_answer(self):
         return self.status == FlagQuizStatus.WAITING_FOR_ANSWER
+
+    def go_to_next_question(self) -> FlagQuizQuestion:
+        self.question = self.generate_next_question()
+        return self.question
+
+    def generate_next_question(self) -> FlagQuizQuestion:
+        raise NotImplementedError()
+
+
+class FlagCountryQuizData(FlagQuizData):
+
+    def generate_next_question(self) -> FlagQuizQuestion:
+        country_code: str = random.choice(country_codes)
+        country_name = country_code2country_name[country_code]
+        return FlagCountryQuizQuestion(
+            self.get_current_question_number() + 1,
+            country_code,
+            country_name,
+            get_flag_image(country_code),
+            'What country does this flag represent?'
+        )
+
+
+class FlagCapitalQuizData(FlagQuizData):
+
+    def generate_next_question(self) -> FlagQuizQuestion:
+        country_code: str = random.choice(country_codes)
+        capital = country_code2capital[country_code]
+        return FlagCapitalQuizQuestion(
+            self.get_current_question_number() + 1,
+            country_code,
+            capital,
+            get_flag_image(country_code),
+            'What is the capital of the country represented by this flag?'
+        )
+
+
+class FlagPopulationQuizData(FlagQuizData):
+
+    def generate_next_question(self) -> FlagQuizQuestion:
+        country_code: str = random.choice(country_codes)
+        population = country_code2population[country_code]
+        return FlagPopulationQuizQuestion(
+            self.get_current_question_number() + 1,
+            country_code,
+            population,
+            get_flag_image(country_code),
+            'What is the population of the country represented by this flag?'
+        )
+
+
+quiz_type_mapping: dict[str, Type[FlagCountryQuizData]] = {
+    'country': FlagCountryQuizData,
+    'flag': FlagCountryQuizData,
+    'capital': FlagCapitalQuizData,
+    'capitals': FlagCapitalQuizData,
+    'pop': FlagPopulationQuizData,
+    'population': FlagPopulationQuizData,
+}
 
 
 @inject(name='flag_quiz_svc')
@@ -110,9 +217,13 @@ class FlagQuizSvc(BaseSvc):
     def start_new_quiz(self, ctx: CommandContext):
         self.validate_can_start_quiz(ctx)
 
-        guild, channel = self.get_quiz_params(ctx)
-        new_quiz = FlagQuizData(guild, channel, FlagQuizStatus.STARTED)
+        new_quiz = self.get_new_quiz(ctx)
         self.quizzes.append(new_quiz)
+
+    def get_new_quiz(self, ctx):
+        guild, channel = self.get_quiz_params(ctx)
+        quiz_type = self.get_quiz_type(ctx.msg.content)
+        return quiz_type(guild, channel, FlagQuizStatus.STARTED)
 
     def end_quiz(self, ctx: CommandContext):
         currently_active_quiz = self.get_quiz_by_ctx(ctx)
@@ -122,15 +233,9 @@ class FlagQuizSvc(BaseSvc):
 
         self.quizzes.remove(currently_active_quiz)
 
-    def get_next_question(self, ctx: CommandContext):
-        question = self.get_new_random_question(ctx)
-        self.update_quiz_data_with_new_question(ctx, question)
-
+    def get_next_question_data(self, ctx: CommandContext):
+        question = self.get_quiz_by_ctx(ctx).go_to_next_question()
         return question.question_text, question.flag_image
-
-    def update_quiz_data_with_new_question(self, ctx, question):
-        quiz = self.get_quiz_by_ctx(ctx)
-        quiz.question = question
 
     async def pause_quiz(self, ctx: CommandContext):
         self.get_quiz_by_ctx(ctx).status = FlagQuizStatus.PAUSED
@@ -138,9 +243,9 @@ class FlagQuizSvc(BaseSvc):
         self.get_quiz_by_ctx(ctx).status = FlagQuizStatus.WAITING_FOR_ANSWER
 
     def try_answer(self, ctx: CommandContext):
+        quiz = self.get_quiz_by_ctx(ctx)
         attempt = ctx.msg.content
         author = ctx.msg.author
-        quiz = self.get_quiz_by_ctx(ctx)
 
         return quiz.try_answer(attempt, author)
 
@@ -149,33 +254,12 @@ class FlagQuizSvc(BaseSvc):
         if quiz is None:
             raise FlagQuizNoActiveQuizzesException()
 
-        quiz.skip()
-        return quiz.question.full_answer
-
-    def get_new_random_question(self, ctx: CommandContext) -> FlagQuizQuestion:
-        current_question_number = self.get_current_question_number(ctx)
-        new_country_code: str = random.choice(country_codes)
-        new_country_name = country_code2country_name[new_country_code]
-
-        return FlagQuizQuestion(
-            current_question_number + 1,
-            new_country_code,
-            new_country_name,
-            self.get_flag_image(new_country_code),
-        )
-
-    def get_current_question_number(self, ctx):
-        quiz = self.get_quiz_by_ctx(ctx)
-        if quiz and quiz.question and quiz.question.number is not None:
-            return quiz.question.number
-        return 0
+        quiz.skip_question()
+        return quiz.question.get_full_answer()
 
     def validate_can_start_quiz(self, ctx: CommandContext):
         if self.quiz_in_progress(ctx):
-            raise FlagQuizInProgressException
-
-    def get_flag_image(self, country_code) -> File:
-        return discord.File(f'{ROOT_PATH}/flags/{country_code}.png')
+            raise FlagQuizInProgressException()
 
     def get_quiz_params(self, ctx: CommandContext):
         guild_id = ctx.msg.guild.id
@@ -184,3 +268,7 @@ class FlagQuizSvc(BaseSvc):
 
     def get_question_num(self, ctx):
         return self.get_quiz_by_ctx(ctx).question.number
+
+    def get_quiz_type(self, msg_content: str) -> Type[FlagCountryQuizData]:
+        quiz_type_raw = start_quiz_pattern.search(msg_content)['quiz_type']
+        return quiz_type_mapping[quiz_type_raw]

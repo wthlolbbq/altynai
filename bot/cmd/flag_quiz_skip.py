@@ -1,4 +1,4 @@
-from bot.constants import skip_quiz_pattern
+from bot.const.constants import skip_quiz_pattern
 from bot.di.dependency_injector import Dependency, inject
 from bot.di.models import InjectionType
 from bot.models import CommandContext, FlagCmd
@@ -26,8 +26,8 @@ class FlagQuizSkip(FlagCmd):
                 f'{self.flag_quiz_svc.time_between_questions} seconds...'
             )
             await self.flag_quiz_svc.pause_quiz(ctx)
-            question_text, flag_image = self.flag_quiz_svc.get_next_question(ctx)
-            await ctx.msg.channel.send(content=question_text, file=flag_image)
+            question_text, attachment = self.flag_quiz_svc.get_next_question_data(ctx)
+            await ctx.msg.channel.send(content=question_text, file=attachment)
         except FlagQuizNoActiveQuizzesException:
             await ctx.msg.channel.send('No active quizzes in this channel!')
         except FlagQuizNoActiveQuestionsException:

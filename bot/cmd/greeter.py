@@ -1,6 +1,6 @@
 import random
 
-from bot.constants import greetings, greeting_emojis
+from bot.const.constants import greetings, greeting_emojis
 from bot.di.dependency_injector import inject, Dependency
 from bot.di.models import InjectionType
 from bot.models import BaseCmd, CommandContext

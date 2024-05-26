@@ -1,6 +1,6 @@
 from bot.di.dependency_injector import inject, Dependency
 from bot.di.models import InjectionType
-from bot.models import CmdProcess, CalculatorProcessExecutor, CalculatorProcessResult
+from bot.models import CmdProcess, CalculatorProcessExecutor
 from bot.process.calculator_process_hooks import CalculatorPostProcessingHook
 
 

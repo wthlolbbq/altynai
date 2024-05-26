@@ -1,6 +1,6 @@
 from discord import Message, User  # NOQA
 
-from bot.constants import calc_pattern
+from bot.const.constants import calc_pattern
 from bot.di.dependency_injector import inject, Dependency
 from bot.di.models import InjectionType
 from bot.models import CommandContext, BaseCmd, LastCalcResultDoesNotExistException, CalculatorProcessResult

@@ -2,7 +2,7 @@ from typing import Any
 
 from discord import Message  # NOQA
 
-from bot.constants import supported_operations, last_calc_answer_pattern, calc_pattern
+from bot.const.constants import supported_operations, last_calc_answer_pattern, calc_pattern
 from bot.di.dependency_injector import Dependency, inject
 from bot.di.models import InjectionType
 from bot.models import CommandContext, CalculatorProcessExecutor, LastCalcResultDoesNotExistException, \

@@ -1,4 +1,4 @@
-from bot.constants import loveyou_pattern
+from bot.const.constants import loveyou_pattern
 from bot.di.dependency_injector import inject
 from bot.models import CommandContext, BaseCmd
 

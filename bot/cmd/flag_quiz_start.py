@@ -1,4 +1,4 @@
-from bot.constants import start_quiz_pattern
+from bot.const.constants import start_quiz_pattern
 from bot.di.dependency_injector import inject, Dependency
 from bot.di.models import InjectionType
 from bot.models import CommandContext, FlagCmd
@@ -22,7 +22,7 @@ class FlagQuizStart(FlagCmd):
             self.flag_quiz_svc.start_new_quiz(ctx)
             await ctx.msg.channel.send(f'Question 1 in {self.flag_quiz_svc.time_between_questions} seconds...')
             await self.flag_quiz_svc.pause_quiz(ctx)
-            question_text, flag_image = self.flag_quiz_svc.get_next_question(ctx)
-            await ctx.msg.channel.send(content=question_text, file=flag_image)
+            question_text, attachment = self.flag_quiz_svc.get_next_question_data(ctx)
+            await ctx.msg.channel.send(content=question_text, file=attachment)
         except FlagQuizInProgressException:
             await ctx.msg.channel.send('Quiz in progress!')
