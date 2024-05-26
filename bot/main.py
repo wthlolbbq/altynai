@@ -5,7 +5,7 @@ import discord  # NOQA
 from discord import Intents, Client, Message  # NOQA
 from dotenv import load_dotenv
 
-from bot.constants import log_datetime_format
+from bot.const.constants import log_datetime_format
 from bot.di.dependency_injector import get_injected_by_name
 from bot.event.on_message import OnMessageHandler
 from bot.event.on_ready import OnReadyHandler

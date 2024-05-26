@@ -2,7 +2,7 @@ import random
 
 from discord import Client  # NOQA
 
-from bot.constants import entrance_lines
+from bot.const.constants import entrance_lines
 from bot.di.dependency_injector import inject
 from bot.models import BaseEvent
 from bot.utils import get_channel_by_name

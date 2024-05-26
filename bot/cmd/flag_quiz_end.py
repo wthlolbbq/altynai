@@ -1,4 +1,4 @@
-from bot.constants import end_quiz_pattern
+from bot.const.constants import end_quiz_pattern
 from bot.di.dependency_injector import Dependency, inject
 from bot.di.models import InjectionType
 from bot.models import CommandContext, FlagCmd

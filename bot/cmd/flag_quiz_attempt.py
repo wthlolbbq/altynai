@@ -20,15 +20,15 @@ class FlagQuizAttempt(FlagCmd):
 
     async def execute(self, ctx: CommandContext):
         if self.flag_quiz_svc.try_answer(ctx):
-            full_answer = self.flag_quiz_svc.get_quiz_by_ctx(ctx).question.full_answer
+            full_answer = self.flag_quiz_svc.get_quiz_by_ctx(ctx).question.get_full_answer()
             await ctx.msg.channel.send(f'{ctx.msg.author.mention} Correct, that\'s **{full_answer}**!')
             await ctx.msg.channel.send(
                 f'Question {self.flag_quiz_svc.get_question_num(ctx) + 1} in '
                 f'{self.flag_quiz_svc.time_between_questions} seconds...'
             )
             await self.flag_quiz_svc.pause_quiz(ctx)
-            question_text, flag_image = self.flag_quiz_svc.get_next_question(ctx)
-            await ctx.msg.channel.send(content=question_text, file=flag_image)
+            question_text, attachment = self.flag_quiz_svc.get_next_question_data(ctx)
+            await ctx.msg.channel.send(content=question_text, file=attachment)
 
     def get_priority(self):
         return HIGH_PRIORITY

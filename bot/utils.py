@@ -2,7 +2,9 @@ from re import Pattern
 from typing import Iterable
 
 import discord  # NOQA
-from discord import Client  # NOQA
+from discord import Client, File  # NOQA
+
+from bot import ROOT_PATH
 
 
 def get_channel_by_name(client: Client, ch_name: str):
@@ -24,3 +26,7 @@ def first(filter_function, iterable: Iterable):
 
 def is_number_integer(num: float | int):
     return num % 1 == 0
+
+
+def get_flag_image(country_code) -> File:
+    return discord.File(f'{ROOT_PATH}/flags/{country_code}.png')

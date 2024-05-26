@@ -1,4 +1,4 @@
-from bot.constants import stutter_choices
+from bot.const.constants import stutter_choices
 from bot.di.dependency_injector import inject, Dependency
 from bot.di.models import InjectionType
 from bot.models import BaseCmd, CommandContext
