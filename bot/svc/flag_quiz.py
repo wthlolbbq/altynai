@@ -6,7 +6,7 @@ from typing import Type
 
 from discord import Member, User, File  # NOQA
 
-from bot.const.constants import country_code2country_name, country_codes, default_time_between_questions, \
+from bot.const.constants import country_code2country_name, default_time_between_questions, \
     start_quiz_pattern, country_code2capital, country_code2population, non_alpha_pattern
 from bot.di.dependency_injector import inject
 from bot.models import BaseSvc, CommandContext
@@ -56,16 +56,13 @@ class FlagQuizQuestion:
 
 
 class FlagCountryQuizQuestion(FlagQuizQuestion):
-    def __init__(self, number: int, country_code: str, answer: any, flag_image: File, question_text: str):
-        super().__init__(number, country_code, answer, flag_image, question_text)
-
-        self.normalized_answers = [self.normalize_answer(ans) for ans in answer]
 
     def get_full_answer(self):
         return self.answer[0]
 
     def is_answer(self, attempt: str):
-        return self.normalize_answer(attempt) in self.normalized_answers
+        normalized_answers = [self.normalize_answer(ans) for ans in self.answer]
+        return self.normalize_answer(attempt) in normalized_answers
 
     def normalize_answer(self, answer: str):
         return re.sub(non_alpha_pattern, '', answer.lower())
@@ -81,21 +78,23 @@ class FlagPopulationQuizQuestion(FlagQuizQuestion):
         return f'{self.answer:,}'
 
     def is_answer(self, attempt: str):
-        normalized_answer = self.normalize_answer(attempt)
+        normalized_answer = self.convert_to_number(attempt)
         if normalized_answer is None:
             return False
 
-        max_abs_deviation_from_correct_answer = max_rel_deviation_from_correct_answer / 100 * self.answer
+        return self.is_attempt_within_percent_of_correct(normalized_answer, max_rel_deviation_from_correct_answer)
+
+    def is_attempt_within_percent_of_correct(self, normalized_answer, tolerance):
+        abs_tolerance = tolerance / 100 * self.answer
         potential_answers = (
             normalized_answer,
             normalized_answer * 1_000,  # thousands
             normalized_answer * 1_000_000,  # millions
             normalized_answer * 1_000_000_000,  # billions
         )
+        return any(abs(ans - self.answer) < abs_tolerance for ans in potential_answers)
 
-        return any(abs(ans - self.answer) < max_abs_deviation_from_correct_answer for ans in potential_answers)
-
-    def normalize_answer(self, answer: str) -> float | None:
+    def convert_to_number(self, answer: str) -> float | None:
         try:
             return float(answer)
         except ValueError:
@@ -126,7 +125,7 @@ class FlagQuizData:
         return False
 
     def skip_question(self):
-        if self.status in (FlagQuizStatus.SKIPPED, FlagQuizStatus.PAUSED, FlagQuizStatus.STARTED):
+        if self.status != FlagQuizStatus.WAITING_FOR_ANSWER:
             raise FlagQuizNoActiveQuestionsException()
 
         self.status = FlagQuizStatus.SKIPPED
@@ -149,7 +148,7 @@ class FlagQuizData:
 class FlagCountryQuizData(FlagQuizData):
 
     def generate_next_question(self) -> FlagQuizQuestion:
-        country_code: str = random.choice(country_codes)
+        country_code: str = random.choice(list(country_code2country_name.keys()))
         country_name = country_code2country_name[country_code]
         return FlagCountryQuizQuestion(
             self.get_current_question_number() + 1,
@@ -163,7 +162,7 @@ class FlagCountryQuizData(FlagQuizData):
 class FlagCapitalQuizData(FlagQuizData):
 
     def generate_next_question(self) -> FlagQuizQuestion:
-        country_code: str = random.choice(country_codes)
+        country_code: str = random.choice(list(country_code2capital.keys()))
         capital = country_code2capital[country_code]
         return FlagCapitalQuizQuestion(
             self.get_current_question_number() + 1,
@@ -177,7 +176,7 @@ class FlagCapitalQuizData(FlagQuizData):
 class FlagPopulationQuizData(FlagQuizData):
 
     def generate_next_question(self) -> FlagQuizQuestion:
-        country_code: str = random.choice(country_codes)
+        country_code: str = random.choice(list(country_code2population.keys()))
         population = country_code2population[country_code]
         return FlagPopulationQuizQuestion(
             self.get_current_question_number() + 1,
@@ -220,21 +219,20 @@ class FlagQuizSvc(BaseSvc):
         new_quiz = self.get_new_quiz(ctx)
         self.quizzes.append(new_quiz)
 
+    def end_quiz(self, ctx: CommandContext):
+        self.validate_can_end_quiz(ctx)
+
+        quiz = self.get_quiz_by_ctx(ctx)
+        self.quizzes.remove(quiz)
+
     def get_new_quiz(self, ctx):
         guild, channel = self.get_quiz_params(ctx)
         quiz_type = self.get_quiz_type(ctx.msg.content)
         return quiz_type(guild, channel, FlagQuizStatus.STARTED)
 
-    def end_quiz(self, ctx: CommandContext):
-        currently_active_quiz = self.get_quiz_by_ctx(ctx)
-
-        if currently_active_quiz is None:
-            raise FlagQuizNoActiveQuizzesException()
-
-        self.quizzes.remove(currently_active_quiz)
-
     def get_next_question_data(self, ctx: CommandContext):
         question = self.get_quiz_by_ctx(ctx).go_to_next_question()
+        print(question.answer)
         return question.question_text, question.flag_image
 
     async def pause_quiz(self, ctx: CommandContext):
@@ -250,16 +248,23 @@ class FlagQuizSvc(BaseSvc):
         return quiz.try_answer(attempt, author)
 
     def reveal_answer(self, ctx: CommandContext):
-        quiz = self.get_quiz_by_ctx(ctx)
-        if quiz is None:
-            raise FlagQuizNoActiveQuizzesException()
+        self.validate_can_reveal_answer(ctx)
 
+        quiz = self.get_quiz_by_ctx(ctx)
         quiz.skip_question()
         return quiz.question.get_full_answer()
 
     def validate_can_start_quiz(self, ctx: CommandContext):
         if self.quiz_in_progress(ctx):
             raise FlagQuizInProgressException()
+
+    def validate_can_reveal_answer(self, ctx):
+        if not self.quiz_in_progress(ctx):
+            raise FlagQuizNoActiveQuizzesException()
+
+    def validate_can_end_quiz(self, ctx):
+        if not self.quiz_in_progress(ctx):
+            raise FlagQuizNoActiveQuizzesException()
 
     def get_quiz_params(self, ctx: CommandContext):
         guild_id = ctx.msg.guild.id

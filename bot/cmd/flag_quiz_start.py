@@ -3,6 +3,7 @@ from bot.di.dependency_injector import inject, Dependency
 from bot.di.models import InjectionType
 from bot.models import CommandContext, FlagCmd
 from bot.svc.flag_quiz import FlagQuizSvc, FlagQuizInProgressException
+from bot.utils import matches
 
 
 @inject('flag_quiz_start', [
@@ -15,7 +16,7 @@ class FlagQuizStart(FlagCmd):
 
     def is_applicable(self, ctx: CommandContext) -> bool:
         msg_content = ctx.msg.content
-        return start_quiz_pattern.search(msg_content) is not None
+        return matches(msg_content, start_quiz_pattern)
 
     async def execute(self, ctx: CommandContext):
         try:
