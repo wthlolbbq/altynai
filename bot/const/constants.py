@@ -25,8 +25,8 @@ greeting_emojis = [
 # StutterChooser
 
 stutter_choices = {
-    'stop stuttering!': False,
-    'start stuttering!': True
+    'stop stuttering!?': False,
+    'start stuttering!?': True
 }
 
 # Calculator
@@ -89,7 +89,7 @@ rickroll_url = r'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
 # Flag Quiz
 
 non_alpha_pattern: Pattern[str] = re.compile(r'[^a-z]')
-default_time_between_questions: float = 3  # seconds
+default_time_between_questions: float = 2  # seconds
 start_quiz_pattern: Pattern[str] = re.compile(
     r'^(start|begin)\s*(?P<quiz_type>country|flag|capital|capitals|pop|population)\s*quiz!*$',
     re.IGNORECASE
@@ -99,14 +99,13 @@ end_quiz_pattern: Pattern[str] = re.compile(
     re.IGNORECASE
 )
 skip_quiz_pattern: Pattern[str] = re.compile(
-    r'^(skip|reveal)\s*question!*$',
+    r'^(skip|reveal)\s*(question)?!*$',
     re.IGNORECASE
 )
 
 country_code2country_name = _country_code_to_name_map
 country_code2capital = _country_code_to_capital_map
 country_code2population = _country_code_to_population_map
-country_codes = list(country_code2country_name.keys())
 
 # Other
 
@@ -114,7 +113,7 @@ channel_ids = {
     'general': 1120086074312642684
 }
 
-log_datetime_format = '%Y-%m-%d %H:%M:%S'  # 2022-03-28 16:45:31
+log_datetime_format = '%Y-%m-%d %H:%M:%S'  # '2022-03-28 16:45:31'
 entrance_lines = (
     'AltynAI in da house!',
     'What\'s up gang?',

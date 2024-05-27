@@ -3,6 +3,7 @@ from bot.di.dependency_injector import Dependency, inject
 from bot.di.models import InjectionType
 from bot.models import CommandContext, FlagCmd
 from bot.svc.flag_quiz import FlagQuizSvc, FlagQuizNoActiveQuizzesException, FlagQuizNoActiveQuestionsException
+from bot.utils import matches
 
 
 @inject('flag_quiz_skip', [
@@ -15,7 +16,7 @@ class FlagQuizSkip(FlagCmd):
 
     def is_applicable(self, ctx: CommandContext) -> bool:
         msg_content = ctx.msg.content
-        return skip_quiz_pattern.search(msg_content) is not None
+        return matches(msg_content, skip_quiz_pattern)
 
     async def execute(self, ctx: CommandContext):
         try:
